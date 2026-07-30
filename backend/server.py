@@ -273,8 +273,10 @@ def top_values(file: str, column: str, sheet: str | None = None, n: int = 10):
     if column not in ds.columns:
         raise HTTPException(400, f"Column '{column}' not found")
     vc = ds.df[column].value_counts(sort=True).head(n).to_dicts()
+    if not vc:
+        return {"column": column, "top": []}
     label_key = column
-    count_key = "count" if "count" in vc[0] else ("counts" if vc and "counts" in vc[0] else None)
+    count_key = "count" if "count" in vc[0] else ("counts" if "counts" in vc[0] else None)
     return {
         "column": column,
         "top": [
