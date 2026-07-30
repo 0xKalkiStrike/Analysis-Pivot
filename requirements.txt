@@ -1,0 +1,40 @@
+# ExcelIntel — Core dependencies (fully offline, no API keys required).
+
+# Desktop UI
+PySide6>=6.6
+pyqtgraph>=0.13
+
+# High-performance data processing
+polars>=1.0
+pyarrow>=15
+pandas>=2.0
+numpy>=1.26
+
+# Excel readers/writers
+openpyxl>=3.1
+XlsxWriter>=3.1
+xlrd>=2.0
+pyxlsb>=1.0
+
+# Analytics database
+duckdb>=1.0
+
+# Similarity / fuzzy matching
+rapidfuzz>=3.5
+python-Levenshtein>=0.25
+
+# Visualisation
+plotly>=5.20
+matplotlib>=3.8
+
+# Reporting
+reportlab>=4.0
+
+# Logging & CLI polish
+rich>=13.7
+
+# Test data generation
+Faker>=25.0
+
+# Testing
+pytest>=8.0
