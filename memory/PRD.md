@@ -29,61 +29,63 @@ Build an enterprise-grade, fully-offline Business Intelligence platform for Exce
 14. pytest unit + integration tests.
 15. PyInstaller packaging scripts.
 
-## What's Been Implemented (2026-01-30)
+## What's Been Implemented (2026-01-30 · v1.1)
 
 - ✅ Complete clean-architecture project layout under `/app/bi_platform`.
 - ✅ Engines: Excel, Cleaning, Fuzzy (6 algorithms + soundex + jaccard + n-gram),
-  Duplicate (exact/hash/column/fuzzy/smart with semantic column detection),
-  Merge (all join types + 4 conflict-resolution strategies),
-  Validation (email/phone/GST/ZIP/date/outliers/nulls with severity levels),
-  Analytics (KPIs + column profiling).
-- ✅ DuckDB manager (with SQLite fallback) — used in the SQL console.
+  Duplicate, Merge (all join types + 4 conflict-resolution strategies),
+  Validation, Analytics, **Relationship (FK inference)**, **Pivot (9 aggregations)**.
+- ✅ DuckDB manager (SQLite fallback) — used in the SQL console.
 - ✅ Export layer: styled XlsxWriter Excel, ReportLab PDF, HTML dashboard, JSON summary.
-- ✅ Project service (.eip JSON files) with save/load and recent projects list.
-- ✅ Desktop UI (PySide6): main window with menu + toolbar + status bar, dockable data-source
-  explorer, tabbed workspace (Dashboard / Data / Duplicates / Validation / SQL / Charts),
-  merge wizard dialog, virtualised Polars→Qt table model, dark & light QSS themes,
-  drag-and-drop file loading, threaded background loader.
+- ✅ Services: Project (.eip), **SavedView (workspace snapshots)**, **FileWatcher (live refresh with debounce)**.
+- ✅ Desktop UI (PySide6):
+    - Main window with menu + toolbar + status bar, docked Data Sources (left) and Saved Views (right).
+    - **8 tabs**: Dashboard, Data, Duplicates, Validation, **Pivot**, **Relationships**, SQL, Charts.
+    - Drag-and-drop pivot builder with Fields → Rows / Columns drop-zones.
+    - Relationship graph (PyQtGraph) + table with cardinality + confidence.
+    - Saved-Views panel: save current tab/dataset/filters/pivot/SQL and one-click restore.
+    - Live-refresh toggle (menu + toolbar) that auto-reloads changed source files.
+    - Merge wizard dialog, virtualised Polars→Qt table model, dark & light QSS themes,
+      drag-and-drop file loading, threaded background loader.
 - ✅ Rich-powered CLI (`python -m bi_platform.cli`) with subcommands
   scan / info / duplicates / merge / validate / summary / export-report.
-- ✅ Sample data generator (`scripts/generate_samples.py`) — customers + invoices + products
-  with intentional duplicates, typos, invalid rows and conflicts.
-- ✅ 28 pytest tests covering excel loading, fuzzy, duplicate, merge, validation, analytics, export.
+- ✅ Sample data generator with intentional duplicates, typos, invalid rows and conflicts.
+- ✅ **39 pytest tests** — engines (Excel, fuzzy, duplicate, merge, validation, analytics,
+  export, pivot, relationship, saved-view).
 - ✅ PyInstaller build helper (`scripts/build.py`).
-- ✅ README.md + docs/INSTALL.md + screenshots in `docs/`.
+- ✅ README.md + docs/INSTALL.md + 6 UI screenshots in `docs/`.
 
-### Verified end-to-end (headless)
+### Verified end-to-end (headless, 2026-01-30)
 
 - Loaded 4 sample sheets → 1,538 rows.
-- Detected 15 duplicate groups in customers_region_a with confidence + reason metadata.
-- Outer-joined the two customer regions → 540 rows, 30 conflicts.
-- Validation produced 75 issues, quality score 94.4.
-- DuckDB console executed `GROUP BY country` on registered dataset.
-- Report generator wrote HTML + PDF + JSON + Excel packages successfully.
-- PySide6 UI booted headlessly (`QT_QPA_PLATFORM=offscreen`) with populated dashboard, data table,
-  duplicate table and validation table screenshots captured to `docs/`.
+- Pivot: `invoices_2024` cross-tab `status × product` sum(total) → 4 rows × N product columns.
+- Relationships: discovered 3 links (customer_id/customer_id N:1 @ 99% confidence + 2 N:N links).
+- Saved Views: captured "Invoice Pivot" and "Region A Duplicates" views (roundtrip verified).
+- Live Refresh: watched 4 files; simulated `os.utime` triggered the debounced reload and
+  the affected sheet was re-parsed and re-rendered.
+- Detected 15 duplicate groups, outer-merge with 30 conflicts, validation score 94.4.
+- DuckDB SQL console executed `GROUP BY country`.
+- Report generator wrote HTML + PDF + JSON + Excel packages.
 
 ## Backlog / P0..P2
 
 ### P0 (next)
 
-- Relationship auto-discovery between sheets (FK inference by column-name + value overlap).
-- Bookmarks / saved views persisted in `.eip` projects.
-- Real-time file watch → auto-refresh datasets.
+- Cross-filtering between dashboard charts and tables (click a bar → filter data).
+- Custom measures / calculated columns (safe expression evaluator).
 
 ### P1
 
-- Drill-through cross-filtering between dashboard charts and tables.
-- Pivot table builder UI.
-- Custom measures / calculated columns (safe expression evaluator).
+- Pivot table drill-through (double-click a cell → underlying rows).
 - Multi-sheet auto-loader with progress per sheet.
+- Command palette (Ctrl+P) global search across actions, files and views.
 
 ### P2
 
 - Plugin loader from `~/.excelintel/plugins/*.py`.
 - Localisation (i18n).
-- CSV export with encoding options.
 - Excel formula parser / repair.
+- Multi-monitor workspace persistence.
 
 ## Environment Notes
 

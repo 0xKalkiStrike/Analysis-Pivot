@@ -15,9 +15,13 @@
 - **Intelligent merge engine** — inner/left/right/outer joins with conflict detection & resolution.
 - **Validation engine** — invalid emails, phones, GSTINs, ZIPs, dates, outliers, missing headers.
 - **Power BI style dashboard** — KPI cards, bar/pie/line/scatter/histogram charts (PyQtGraph).
+- **Drag-and-drop Pivot Builder** — Excel/Power-BI-style cross-tabs with 9 aggregation modes.
+- **Relationship Discovery** — auto-infer foreign-key candidates across all loaded sheets with a visual graph.
+- **Saved Views** — bookmark tab + dataset + filters + pivot state + SQL and jump back with one click.
+- **Live Refresh** — watch the source files on disk and auto-reload sheets when they change.
 - **Ad-hoc SQL console** powered by DuckDB across all loaded datasets.
 - **Exports** — styled Excel (colors, filters, freeze panes), PDF, HTML and JSON reports.
-- **Project workspaces** — save/load `.eip` projects with recent files.
+- **Project workspaces** — save/load `.eip` projects with recent files and saved views.
 - **CLI** for headless / server-side workflows.
 - **PyInstaller** packaging for Windows, macOS and Linux.
 
@@ -28,6 +32,16 @@
 <p align="center">
   <img src="docs/screenshot_dashboard.png" width="800" alt="Dashboard"/><br/>
   <em>Analytics Dashboard — KPIs + bar/pie insights</em>
+</p>
+
+<p align="center">
+  <img src="docs/screenshot_pivot.png" width="800" alt="Pivot Builder"/><br/>
+  <em>Drag-and-drop Pivot Builder — cross-tab of status × product with sum(total)</em>
+</p>
+
+<p align="center">
+  <img src="docs/screenshot_relationships.png" width="800" alt="Relationship Discovery"/><br/>
+  <em>Relationship Discovery — auto-infer FK links + visual graph across sheets</em>
 </p>
 
 <p align="center">
@@ -96,15 +110,16 @@ bi_platform/
 ├── models/          # dataclasses (Dataset, DuplicateGroup, ...)
 ├── engine/          # ExcelEngine, CleaningEngine, FuzzyEngine,
 │                    #  DuplicateEngine, MergeEngine, ValidationEngine,
-│                    #  AnalyticsEngine
+│                    #  AnalyticsEngine, RelationshipEngine, PivotEngine
 ├── database/        # DuckDB / SQLite manager
 ├── export/          # ExcelExporter, ReportGenerator (PDF/HTML/JSON)
-├── services/        # Project workspace persistence (.eip)
+├── services/        # Project workspace, SavedView, FileWatcher (live refresh)
 ├── ui/
 │   ├── theme.py     # dark / light QSS
 │   ├── main_window.py
 │   └── widgets/     # Dashboard, DataViewer, Duplicates, Validation,
-│                    #  Merge Wizard, Charts, SQL Console
+│                    #  Merge Wizard, Charts, SQL Console,
+│                    #  Pivot Builder, Relationship Viewer, Saved Views
 ├── utils/
 ├── __main__.py      # GUI entry point
 └── cli.py           # command-line interface
@@ -120,7 +135,7 @@ Clean architecture — engines are pure Python and fully testable without a disp
 pytest -q
 ```
 
-28+ tests covering the Excel, duplicate, fuzzy, merge, validation, analytics and export engines.
+39 tests covering Excel loading, duplicate, fuzzy, merge, validation, analytics, export, pivot, relationship and saved-view engines.
 
 ---
 
@@ -139,11 +154,13 @@ Outputs to `dist/ExcelIntel/`.
 
 ## Roadmap
 
-- [ ] Relationship auto-discovery across sheets (foreign key inference)
-- [ ] Bookmarks + saved views
+- [x] Relationship auto-discovery across sheets (foreign key inference)
+- [x] Bookmarks + saved views
+- [x] File-watch live refresh
+- [x] Drag-and-drop pivot builder
 - [ ] Custom DAX-like measures
 - [ ] Plugin system (drop-in Python files under `~/.excelintel/plugins/`)
-- [ ] Real-time file watching + auto refresh
+- [ ] Cross-filtering between dashboard charts and tables
 - [ ] Multi-monitor workspace persistence
 
 ---
