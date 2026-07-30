@@ -14,9 +14,11 @@
 - **Data cleaning** — Unicode normalisation, whitespace/case fixes, phone/email/currency normalisation.
 - **Intelligent merge engine** — inner/left/right/outer joins with conflict detection & resolution.
 - **Validation engine** — invalid emails, phones, GSTINs, ZIPs, dates, outliers, missing headers.
-- **Power BI style dashboard** — KPI cards, bar/pie/line/scatter/histogram charts (PyQtGraph).
-- **Drag-and-drop Pivot Builder** — Excel/Power-BI-style cross-tabs with 9 aggregation modes.
+- **Power BI style dashboard** — KPI cards + interactive bar/pie/top-values charts.
+- **Cross-filtering** — click any bar or pie slice on the dashboard to instantly filter every other view.
+- **Drag-and-drop Pivot Builder** with **drill-through** (double-click any pivot cell to see underlying rows).
 - **Relationship Discovery** — auto-infer foreign-key candidates across all loaded sheets with a visual graph.
+- **Command Palette (Ctrl+P)** — fuzzy-search every file, dataset, saved view and action.
 - **Saved Views** — bookmark tab + dataset + filters + pivot state + SQL and jump back with one click.
 - **Live Refresh** — watch the source files on disk and auto-reload sheets when they change.
 - **Ad-hoc SQL console** powered by DuckDB across all loaded datasets.
@@ -30,13 +32,23 @@
 ## Screenshots
 
 <p align="center">
-  <img src="docs/screenshot_dashboard.png" width="800" alt="Dashboard"/><br/>
-  <em>Analytics Dashboard — KPIs + bar/pie insights</em>
+  <img src="docs/screenshot_dashboard_cross_filter.png" width="800" alt="Cross-filter dashboard"/><br/>
+  <em>Interactive dashboard — click any bar or slice to cross-filter the workspace</em>
 </p>
 
 <p align="center">
   <img src="docs/screenshot_pivot.png" width="800" alt="Pivot Builder"/><br/>
-  <em>Drag-and-drop Pivot Builder — cross-tab of status × product with sum(total)</em>
+  <em>Drag-and-drop Pivot Builder — double-click any cell to drill through</em>
+</p>
+
+<p align="center">
+  <img src="docs/screenshot_drill_through.png" width="800" alt="Drill-through"/><br/>
+  <em>Drill-through — every pivot cell traces back to the underlying rows</em>
+</p>
+
+<p align="center">
+  <img src="docs/screenshot_command_palette.png" width="800" alt="Command Palette"/><br/>
+  <em>Command Palette (Ctrl+P) — fuzzy search across files, views, datasets and actions</em>
 </p>
 
 <p align="center">
@@ -135,7 +147,7 @@ Clean architecture — engines are pure Python and fully testable without a disp
 pytest -q
 ```
 
-39 tests covering Excel loading, duplicate, fuzzy, merge, validation, analytics, export, pivot, relationship and saved-view engines.
+47 tests covering Excel loading, duplicate, fuzzy, merge, validation, analytics, export, pivot, relationship, saved-view, drill-through and command-palette logic.
 
 ---
 
@@ -158,9 +170,11 @@ Outputs to `dist/ExcelIntel/`.
 - [x] Bookmarks + saved views
 - [x] File-watch live refresh
 - [x] Drag-and-drop pivot builder
-- [ ] Custom DAX-like measures
+- [x] Cross-filtering between dashboard charts and workspace
+- [x] Drill-through from any pivot cell to underlying rows
+- [x] Command Palette (Ctrl+P)
+- [ ] Custom DAX-like measures / calculated columns
 - [ ] Plugin system (drop-in Python files under `~/.excelintel/plugins/`)
-- [ ] Cross-filtering between dashboard charts and tables
 - [ ] Multi-monitor workspace persistence
 
 ---

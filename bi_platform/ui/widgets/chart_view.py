@@ -1,11 +1,15 @@
-"""Chart widget using pyqtgraph — bar, pie, line, scatter, histogram."""
+"""Chart widget using pyqtgraph — bar, pie, line, scatter, histogram.
+
+Charts emit ``category_clicked(str, float)`` when the user clicks a bar or
+pie slice. This powers cross-filtering across the workspace.
+"""
 from __future__ import annotations
 
 import math
 
 import numpy as np
 import pyqtgraph as pg
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor, QFont
 from PySide6.QtWidgets import QVBoxLayout, QLabel, QWidget
 
@@ -19,6 +23,8 @@ PALETTE = [
 
 
 class ChartViewWidget(QWidget):
+    category_clicked = Signal(str, float)  # emitted with (category, value)
+
     def __init__(self, title: str = "") -> None:
         super().__init__()
         v = QVBoxLayout(self); v.setContentsMargins(12, 12, 12, 12); v.setSpacing(8)
@@ -33,13 +39,22 @@ class ChartViewWidget(QWidget):
         self.plot.showGrid(x=True, y=True, alpha=0.15)
         v.addWidget(self.plot, 1)
 
+        # Click state
+        self._bar_bounds: list[tuple[float, float, str, float]] = []  # (xmin, xmax, category, value)
+        self._pie_slices: list[tuple[float, float, str, float]] = []  # (startDeg, spanDeg, label, value)
+        self.plot.scene().sigMouseClicked.connect(self._on_scene_click)
+
     def set_title(self, title: str) -> None:
         self.title_label.setText(title)
 
     def clear(self) -> None:
         self.plot.clear()
+        self._bar_bounds = []
+        self._pie_slices = []
+        self.plot.getAxis("left").show()
+        self.plot.getAxis("bottom").show()
 
-    # ----- charts
+    # ---------------------------------------------------------------- charts
     def bar_chart(self, categories: list[str], values: list[float], ylabel: str = "") -> None:
         self.clear()
         if not categories:
@@ -52,6 +67,11 @@ class ChartViewWidget(QWidget):
         axis.setTicks([list(zip(x.tolist(), categories))])
         self.plot.setLabel("left", ylabel)
         self.plot.getAxis("bottom").setStyle(tickTextOffset=8, tickFont=QFont("Inter", 8))
+        self._bar_bounds = [
+            (xi - 0.35, xi + 0.35, cat, float(val))
+            for xi, cat, val in zip(x, categories, values)
+        ]
+        self.plot.setCursor(Qt.PointingHandCursor)
 
     def line_chart(self, x: list, y: list, name: str = "") -> None:
         self.clear()
@@ -73,7 +93,6 @@ class ChartViewWidget(QWidget):
         self.plot.addItem(bg)
 
     def pie_chart(self, labels: list[str], values: list[float]) -> None:
-        """Simple pie drawn on the plot using QGraphicsEllipseItem sectors."""
         self.clear()
         self.plot.hideAxis("left"); self.plot.hideAxis("bottom"); self.plot.showGrid(x=False, y=False)
         if not values:
@@ -92,7 +111,6 @@ class ChartViewWidget(QWidget):
             item.setPen(pg.mkPen(color=(20, 20, 30), width=1))
             self.plot.addItem(item)
 
-            # Label
             mid_angle = math.radians(start_angle + span / 2)
             lx = math.cos(mid_angle) * radius * 1.25
             ly = math.sin(mid_angle) * radius * 1.25
@@ -100,6 +118,35 @@ class ChartViewWidget(QWidget):
                                anchor=(0.5, 0.5))
             text.setPos(lx, ly)
             self.plot.addItem(text)
+            self._pie_slices.append((start_angle, span, label, float(val)))
             start_angle += span
         self.plot.setRange(xRange=(-1.8, 1.8), yRange=(-1.5, 1.5))
         self.plot.setAspectLocked(True)
+        self.plot.setCursor(Qt.PointingHandCursor)
+
+    # ---------------------------------------------------------------- click
+    def _on_scene_click(self, event) -> None:
+        if event.button() != Qt.LeftButton:
+            return
+        pos = event.scenePos()
+        vb = self.plot.getPlotItem().vb
+        if vb is None or not vb.sceneBoundingRect().contains(pos):
+            return
+        p = vb.mapSceneToView(pos)
+        x, y = p.x(), p.y()
+        # Bar hit-test
+        for xmin, xmax, category, value in self._bar_bounds:
+            if xmin <= x <= xmax and 0 <= y <= value:
+                self.category_clicked.emit(category, value)
+                return
+        # Pie hit-test (unit circle)
+        if self._pie_slices:
+            r = math.hypot(x, y)
+            if r <= 1.0:
+                angle = math.degrees(math.atan2(y, x))
+                if angle < 0:
+                    angle += 360.0
+                for start, span, label, val in self._pie_slices:
+                    if start <= angle < start + span:
+                        self.category_clicked.emit(label, val)
+                        return

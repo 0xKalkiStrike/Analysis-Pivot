@@ -17,6 +17,7 @@ from ..export import ExcelExporter, ReportGenerator
 from ..models import Dataset
 from ..services import FileWatcher, ProjectService, SavedView
 from .theme import apply_theme
+from .dialogs import Command, CommandPalette, DrillThroughDialog
 from .widgets import (ChartViewWidget, DashboardWidget, DataViewerWidget,
                        DuplicateViewWidget, FileExplorerWidget,
                        MergeWizardDialog, PivotBuilderWidget,
@@ -114,6 +115,14 @@ class MainWindow(QMainWindow):
         self.duplicates.export_requested.connect(self._export_duplicates)
         self.validation.export_requested.connect(self._export_validation)
 
+        # Cross-filter wiring from Dashboard
+        self.dashboard.dataset_selected.connect(self._cross_filter_dataset)
+        self.dashboard.quality_selected.connect(self._cross_filter_quality)
+        self.dashboard.top_value_selected.connect(self._cross_filter_top_value)
+
+        # Drill-through wiring from Pivot
+        self.pivot.drill_through_requested.connect(self._show_drill_through)
+
         # Left dock: file explorer
         self.explorer = FileExplorerWidget()
         self.explorer.open_files_requested.connect(self.open_paths)
@@ -165,6 +174,7 @@ class MainWindow(QMainWindow):
         m_view = mb.addMenu("&View")
         m_view.addAction(self._act("Toggle Theme", self.toggle_theme))
         m_view.addAction(self._act("Save Current View…", lambda: self.saved_views._on_save(), "Ctrl+B"))
+        m_view.addAction(self._act("Command Palette…", self.open_command_palette, "Ctrl+P"))
 
         m_help = mb.addMenu("&Help")
         m_help.addAction(self._act("About", self.show_about))
@@ -256,6 +266,7 @@ class MainWindow(QMainWindow):
         self.sql.register_datasets(self.datasets)
         self.pivot.set_datasets(self.datasets, select=ds.name)
         self.relationships.set_datasets(self.datasets)
+        self.dashboard.set_active_dataset(ds)
         self.tabs.setCurrentWidget(self.data_viewer)
 
     def refresh_dashboard(self) -> None:
@@ -472,6 +483,116 @@ class MainWindow(QMainWindow):
                 self.project_service.save(self.current_project, proj_path)
         except Exception as e:
             log.warning(f"Could not auto-save views: {e}")
+
+    # ------------------------------------------------------------------ cross-filter
+    def _cross_filter_dataset(self, full_name: str) -> None:
+        ds = self.datasets.get(full_name)
+        if ds:
+            self._activate_dataset(ds)
+            self.subtitle.setText(f"Filtered by dataset: {full_name}")
+
+    def _cross_filter_quality(self, label: str) -> None:
+        # Route quality-segment click to the relevant tab
+        mapping = {
+            "Duplicates": (self.duplicates, self.duplicates.run),
+            "Missing": (self.validation, self.validation.run),
+            "Unique": (self.data_viewer, None),
+        }
+        target = mapping.get(label)
+        if not target:
+            return
+        widget, runner = target
+        self.tabs.setCurrentWidget(widget)
+        if runner:
+            try:
+                runner()
+            except Exception as e:  # pragma: no cover
+                log.warning(f"cross-filter action failed: {e}")
+        self.subtitle.setText(f"Filtered by quality segment: {label}")
+
+    def _cross_filter_top_value(self, column: str, value: str) -> None:
+        # Apply as a search filter in the Data viewer
+        if column and self.data_viewer.column_combo.findText(column) >= 0:
+            self.data_viewer.column_combo.setCurrentText(column)
+        self.data_viewer.search.setText(value)
+        self.tabs.setCurrentWidget(self.data_viewer)
+        self.subtitle.setText(f"Filtered where {column} = '{value}'")
+
+    # ------------------------------------------------------------------ drill-through
+    def _show_drill_through(self, payload: dict) -> None:
+        dlg = DrillThroughDialog(
+            dataset=payload["dataset"],
+            row_filters=payload.get("row_filters", {}),
+            column_filters=payload.get("column_filters", {}),
+            value_column=payload.get("value_column"),
+            aggregate=payload.get("aggregate", "sum"),
+            parent=self,
+        )
+        dlg.exec()
+
+    # ------------------------------------------------------------------ command palette
+    def open_command_palette(self) -> None:
+        if not hasattr(self, "_palette"):
+            self._palette = CommandPalette(self)
+        self._palette.set_commands(self._build_commands())
+        self._palette.open()
+
+    def _build_commands(self) -> list[Command]:
+        cmds: list[Command] = []
+        # Actions
+        actions = [
+            ("Open Files…", self.explorer._on_open_files, "Ctrl+O", "Load spreadsheets"),
+            ("Open Folder…", self.explorer._on_open_folder, "Ctrl+Shift+O", "Scan a directory"),
+            ("Save Project…", self.save_project, "Ctrl+S", "Persist workspace"),
+            ("Load Project…", self.load_project, "", "Restore workspace"),
+            ("Merge Wizard…", self.open_merge_wizard, "Ctrl+M", "Join two datasets"),
+            ("Discover Relationships", self.discover_relationships, "Ctrl+R", "Auto FK inference"),
+            ("Refresh Dashboard", self.refresh_dashboard, "F5", "Recompute KPIs"),
+            ("Export Full Report…", self.export_full_report, "", "PDF + HTML + JSON + Excel"),
+            ("Export Current Sheet…", self.export_current, "", "Export active data table"),
+            ("Toggle Theme", self.toggle_theme, "", "Dark ↔ Light"),
+            ("Toggle Live Refresh", lambda: self.act_live_refresh.toggle(), "", "Watch source files"),
+            ("Save Current View…", lambda: self.saved_views._on_save(), "Ctrl+B", "Bookmark workspace state"),
+        ]
+        for label, action, sc, hint in actions:
+            cmds.append(Command(label=label, action=action, category="Action", shortcut=sc, hint=hint))
+
+        # Tabs
+        tab_defs = [
+            ("Go to Dashboard", self.dashboard),
+            ("Go to Data", self.data_viewer),
+            ("Go to Duplicates", self.duplicates),
+            ("Go to Validation", self.validation),
+            ("Go to Pivot", self.pivot),
+            ("Go to Relationships", self.relationships),
+            ("Go to SQL", self.sql),
+            ("Go to Charts", self.charts),
+        ]
+        for label, widget in tab_defs:
+            cmds.append(Command(
+                label=label,
+                action=lambda w=widget: self.tabs.setCurrentWidget(w),
+                category="Navigate",
+            ))
+
+        # Datasets
+        for name, ds in self.datasets.items():
+            cmds.append(Command(
+                label=f"Activate: {name}",
+                action=lambda d=ds: self._activate_dataset(d),
+                category="Dataset",
+                hint=f"{ds.rows:,} rows × {ds.cols} cols",
+            ))
+
+        # Saved views
+        for view in self.saved_views_list:
+            cmds.append(Command(
+                label=f"View: {view.name}",
+                action=lambda v=view: self._apply_saved_view(v),
+                category="View",
+                hint=f"tab={view.tab} · dataset={view.dataset or '-'}",
+            ))
+        return cmds
 
     # ------------------------------------------------------------------ drag&drop
     def dragEnterEvent(self, e) -> None:  # noqa: N802

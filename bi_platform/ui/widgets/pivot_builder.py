@@ -51,9 +51,12 @@ class _DropList(QListWidget):
 
 
 class PivotBuilderWidget(QWidget):
+    drill_through_requested = Signal(dict)  # {row_filters, column_filters, value_column, aggregate}
+
     def __init__(self) -> None:
         super().__init__()
         self.dataset: Dataset | None = None
+        self._last_config: dict = {}
 
         outer = QVBoxLayout(self); outer.setContentsMargins(16, 16, 16, 16); outer.setSpacing(12)
 
@@ -118,11 +121,12 @@ class PivotBuilderWidget(QWidget):
         outer.addLayout(cols)
 
         # result
-        outer.addWidget(QLabel("Result"))
+        outer.addWidget(QLabel("Result  ·  double-click a cell to drill-through"))
         self.model = PolarsTableModel()
         self.table = QTableView(); self.table.setModel(self.model)
         self.table.setAlternatingRowColors(True); self.table.setSortingEnabled(True)
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
+        self.table.doubleClicked.connect(self._on_double_click)
         outer.addWidget(self.table, 2)
 
     # ------------------------------------------------------------------ api
@@ -161,6 +165,10 @@ class PivotBuilderWidget(QWidget):
         except Exception as e:
             QMessageBox.critical(self, "Pivot error", str(e)); return
         self.model.set_dataframe(result)
+        self._last_config = {
+            "rows": rows, "cols": cols or [],
+            "value_column": value, "aggregate": agg,
+        }
 
     def export(self) -> None:
         df = self.model.dataframe()
@@ -171,6 +179,46 @@ class PivotBuilderWidget(QWidget):
         from ...models import Dataset as DS
         ExcelExporter().export_dataset(DS(name="Pivot", df=df), p)
         QMessageBox.information(self, "Export", f"Written {p}")
+
+    # ------------------------------------------------------------------ drill-through
+    def _on_double_click(self, index) -> None:
+        if not self.dataset or not self._last_config:
+            return
+        df = self.model.dataframe()
+        if df is None or df.is_empty():
+            return
+        row_i, col_i = index.row(), index.column()
+        if row_i < 0 or col_i < 0 or row_i >= df.height or col_i >= df.width:
+            return
+
+        rows = self._last_config.get("rows", [])
+        cols = self._last_config.get("cols", [])
+        result_columns = df.columns
+        clicked_column_name = result_columns[col_i]
+
+        # Row filters — pick pivot row keys
+        row_filters: dict = {}
+        for k in rows:
+            if k in df.columns:
+                row_filters[k] = df[k][row_i]
+
+        # Column filters — reconstruct if user clicked a data cell (not a row-key col)
+        column_filters: dict = {}
+        if cols and clicked_column_name not in rows:
+            # The result column name is the concatenated column-key values (" · " separator)
+            parts = str(clicked_column_name).split(" · ")
+            if len(parts) == len(cols):
+                for k, v in zip(cols, parts):
+                    column_filters[k] = v
+
+        payload = {
+            "row_filters": row_filters,
+            "column_filters": column_filters,
+            "value_column": self._last_config.get("value_column"),
+            "aggregate": self._last_config.get("aggregate", "sum"),
+            "dataset": self.dataset,
+        }
+        self.drill_through_requested.emit(payload)
 
     # ------------------------------------------------------------------ view state
     def get_state(self) -> dict:
