@@ -70,15 +70,11 @@ def test_relationships(client):
     d = r.json()
     assert "relationships" in d
     assert "datasets" in d
->>>>>>> a4386bf (Initial commit)
     assert len(d["relationships"]) >= 1
 
 
 # --- screenshots
 def test_screenshot(client):
-<<<<<<< HEAD
-    r = client.get(f"{BASE_URL}/api/screenshots/screenshot_dashboard.png")
-=======
     r = client.get("/api/screenshots/screenshot_dashboard.png")
     assert r.status_code == 200
     assert r.headers.get("content-type", "").startswith("image/")
@@ -97,8 +93,6 @@ def test_dataset(client):
     assert d["rows"] > 0
     assert isinstance(d["columns"], list) and len(d["columns"]) > 0
     assert isinstance(d["preview"], list)
-<<<<<<< HEAD
-=======
 
 
 # --- pivot
@@ -125,6 +119,3 @@ def test_upload(client):
     d = r.json()
     assert d["status"] == "success"
     assert d["filename"] == "test_upload.csv"
-
-
->>>>>>> a4386bf (Initial commit)

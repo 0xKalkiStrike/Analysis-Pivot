@@ -54,8 +54,6 @@ class ExcelExporter:
         log.info(f"Excel export written: {path}")
         return str(path)
 
-<<<<<<< HEAD
-=======
     def generate_duplicate_report(self, analysis_result: Any, path: str | Path = "Duplicate_Report.xlsx") -> str:
         """Generate comprehensive Duplicate_Report.xlsx containing 5 styled sheets:
 
