@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+<<<<<<< HEAD
     "@hookform/resolvers": "5.0.1",
     "@radix-ui/react-accordion": "1.2.8",
     "@radix-ui/react-alert-dialog": "1.1.11",
@@ -64,6 +65,69 @@
     "start": "craco start",
     "build": "craco build",
     "test": "craco test"
+=======
+    "@hookform/resolvers": "^3.9.1",
+    "@radix-ui/react-accordion": "^1.2.1",
+    "@radix-ui/react-alert-dialog": "^1.1.2",
+    "@radix-ui/react-aspect-ratio": "^1.1.0",
+    "@radix-ui/react-avatar": "^1.1.1",
+    "@radix-ui/react-checkbox": "^1.1.2",
+    "@radix-ui/react-collapsible": "^1.1.1",
+    "@radix-ui/react-context-menu": "^2.2.2",
+    "@radix-ui/react-dialog": "^1.1.2",
+    "@radix-ui/react-dropdown-menu": "^2.1.2",
+    "@radix-ui/react-hover-card": "^1.1.2",
+    "@radix-ui/react-label": "^2.1.0",
+    "@radix-ui/react-menubar": "^1.1.2",
+    "@radix-ui/react-navigation-menu": "^1.2.1",
+    "@radix-ui/react-popover": "^1.1.2",
+    "@radix-ui/react-progress": "^1.1.0",
+    "@radix-ui/react-radio-group": "^1.2.1",
+    "@radix-ui/react-scroll-area": "^1.2.1",
+    "@radix-ui/react-select": "^2.1.2",
+    "@radix-ui/react-separator": "^1.1.0",
+    "@radix-ui/react-slider": "^1.2.1",
+    "@radix-ui/react-slot": "^1.1.0",
+    "@radix-ui/react-switch": "^1.1.1",
+    "@radix-ui/react-tabs": "^1.1.1",
+    "@radix-ui/react-toast": "^1.2.2",
+    "@radix-ui/react-toggle": "^1.1.0",
+    "@radix-ui/react-toggle-group": "^1.1.0",
+    "@radix-ui/react-tooltip": "^1.1.4",
+    "@tanstack/react-query": "^5.62.0",
+    "axios": "^1.7.9",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "cmdk": "^1.0.0",
+    "cra-template": "1.2.0",
+    "date-fns": "^4.1.0",
+    "dayjs": "^1.11.13",
+    "embla-carousel-react": "^8.5.1",
+    "framer-motion": "^11.15.0",
+    "input-otp": "^1.4.1",
+    "lodash": "^4.17.21",
+    "lucide-react": "^0.468.0",
+    "next-themes": "^0.4.4",
+    "react": "^18.3.1",
+    "react-day-picker": "^8.10.1",
+    "react-dom": "^18.3.1",
+    "react-hook-form": "^7.54.0",
+    "react-resizable-panels": "^2.1.7",
+    "react-router-dom": "^6.28.0",
+    "react-scripts": "5.0.1",
+    "recharts": "^2.15.0",
+    "sonner": "^1.7.1",
+    "swr": "^2.2.5",
+    "tailwind-merge": "^2.5.5",
+    "tailwindcss-animate": "^1.0.7",
+    "vaul": "^1.1.1",
+    "zod": "^3.24.1"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test"
+>>>>>>> a4386bf (Initial commit)
   },
   "browserslist": {
     "production": [
@@ -79,10 +143,18 @@
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "7.21.11",
+<<<<<<< HEAD
     "@craco/craco": "7.1.0",
     "@emergentbase/visual-edits": "https://assets.emergent.sh/npm/emergentbase-visual-edits-1.0.13.tgz",
     "@eslint/js": "9.23.0",
     "@types/lodash": "4.17.24",
+=======
+    "@eslint/js": "9.23.0",
+    "@types/lodash": "4.17.24",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^2.1.1",
+    "ajv-keywords": "^5.1.0",
+>>>>>>> a4386bf (Initial commit)
     "autoprefixer": "10.4.20",
     "dotenv": "16.4.5",
     "eslint": "9.23.0",
@@ -92,6 +164,7 @@
     "eslint-plugin-react-hooks": "5.2.0",
     "globals": "15.15.0",
     "postcss": "8.5.10",
+<<<<<<< HEAD
     "tailwindcss": "3.4.17"
   },
   "resolutions": {
@@ -139,4 +212,10 @@
     "http-proxy-middleware": "2.0.10"
   },
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+=======
+    "tailwindcss": "3.4.17",
+    "ts-node": "10.9.2",
+    "webpack-sources": "3.2.3"
+  }
+>>>>>>> a4386bf (Initial commit)
 }

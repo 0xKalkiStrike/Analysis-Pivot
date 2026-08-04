@@ -97,6 +97,7 @@ class DuplicateEngine:
             return []
 
         rows = df.to_dicts()
+<<<<<<< HEAD
         values: list[tuple[int, str]] = [
             (i, self._norm(r.get(column))) for i, r in enumerate(rows)
             if r.get(column) is not None
@@ -133,6 +134,51 @@ class DuplicateEngine:
                 avg = sum(r["_similarity"] for r in group_rows) / len(group_rows)
                 groups.append(DuplicateGroup(
                     key=val, rows=group_rows, confidence=avg,
+=======
+        # Group row indices by normalized string key first
+        key_to_indices: dict[str, list[int]] = {}
+        for i, r in enumerate(rows):
+            v = r.get(column)
+            if v is not None:
+                norm_v = self._norm(v)
+                if norm_v:
+                    key_to_indices.setdefault(norm_v, []).append(i)
+
+        if not key_to_indices:
+            return []
+
+        unique_keys = list(key_to_indices.keys())
+        seen_keys: set[str] = set()
+        groups: list[DuplicateGroup] = []
+
+        for key in unique_keys:
+            if key in seen_keys:
+                continue
+
+            matches = process.extract(
+                key, unique_keys, scorer=self.fuzzy.scorer,
+                limit=limit or len(unique_keys), score_cutoff=threshold,
+            )
+
+            group_rows = []
+            matched_key_count = 0
+            for match_val, score, match_pos in matches:
+                m_key = unique_keys[match_pos]
+                if m_key in seen_keys and m_key != key:
+                    continue
+                seen_keys.add(m_key)
+                matched_key_count += 1
+                for real_idx in key_to_indices[m_key]:
+                    r = dict(rows[real_idx])
+                    r["_row_index"] = real_idx
+                    r["_similarity"] = float(score)
+                    group_rows.append(r)
+
+            if len(group_rows) > 1:
+                avg = sum(r["_similarity"] for r in group_rows) / len(group_rows)
+                groups.append(DuplicateGroup(
+                    key=key, rows=group_rows, confidence=avg,
+>>>>>>> a4386bf (Initial commit)
                     method=f"fuzzy:{self.fuzzy.algorithm}",
                     reason=f"'{column}' similarity ≥ {threshold:.0f}%",
                 ))

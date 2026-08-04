@@ -52,11 +52,22 @@ class ExcelEngine:
             return wb.sheet_names()
         # xlsx / xlsm
         from openpyxl import load_workbook
+<<<<<<< HEAD
         wb = load_workbook(str(p), read_only=True, data_only=True)
         try:
             return list(wb.sheetnames)
         finally:
             wb.close()
+=======
+        try:
+            wb = load_workbook(str(p), read_only=True, data_only=True)
+            try:
+                return list(wb.sheetnames)
+            finally:
+                wb.close()
+        except Exception:
+            return ["Sheet1"]
+>>>>>>> a4386bf (Initial commit)
 
     # ------------------------------------------------------------------ loading
     def load_sheet(
