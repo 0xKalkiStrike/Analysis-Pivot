@@ -97,44 +97,6 @@ class DuplicateEngine:
             return []
 
         rows = df.to_dicts()
-<<<<<<< HEAD
-        values: list[tuple[int, str]] = [
-            (i, self._norm(r.get(column))) for i, r in enumerate(rows)
-            if r.get(column) is not None
-        ]
-        if not values:
-            return []
-
-        seen: set[int] = set()
-        groups: list[DuplicateGroup] = []
-        val_map = {i: v for i, v in values}
-        strings = [v for _, v in values]
-        indices = [i for i, _ in values]
-
-        for pos, (idx, val) in enumerate(values):
-            if idx in seen or not val:
-                continue
-            matches = process.extract(
-                val, strings, scorer=self.fuzzy.scorer,
-                limit=limit or len(strings), score_cutoff=threshold,
-            )
-            group_rows = []
-            group_indices = []
-            for match_val, score, match_pos in matches:
-                real_idx = indices[match_pos]
-                if real_idx in seen:
-                    continue
-                seen.add(real_idx)
-                r = dict(rows[real_idx])
-                r["_row_index"] = real_idx
-                r["_similarity"] = float(score)
-                group_rows.append(r)
-                group_indices.append(real_idx)
-            if len(group_rows) > 1:
-                avg = sum(r["_similarity"] for r in group_rows) / len(group_rows)
-                groups.append(DuplicateGroup(
-                    key=val, rows=group_rows, confidence=avg,
-=======
         # Group row indices by normalized string key first
         key_to_indices: dict[str, list[int]] = {}
         for i, r in enumerate(rows):
@@ -178,7 +140,6 @@ class DuplicateEngine:
                 avg = sum(r["_similarity"] for r in group_rows) / len(group_rows)
                 groups.append(DuplicateGroup(
                     key=key, rows=group_rows, confidence=avg,
->>>>>>> a4386bf (Initial commit)
                     method=f"fuzzy:{self.fuzzy.algorithm}",
                     reason=f"'{column}' similarity ≥ {threshold:.0f}%",
                 ))

@@ -2,11 +2,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-<<<<<<< HEAD
-from typing import Iterable
-=======
 from typing import Any, Iterable
->>>>>>> a4386bf (Initial commit)
 
 import polars as pl
 import xlsxwriter

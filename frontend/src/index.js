@@ -1,13 +1,8 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-<<<<<<< HEAD
-import "@/index.css";
-import App from "@/App";
-=======
 import "./index.css";
 import App from "./App";
->>>>>>> a4386bf (Initial commit)
 
 const queryClient = new QueryClient({
   defaultOptions: {

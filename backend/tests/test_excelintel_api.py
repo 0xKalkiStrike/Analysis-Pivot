@@ -1,35 +1,17 @@
 """Backend API tests for ExcelIntel preview."""
-<<<<<<< HEAD
-import os
-import pytest
-import requests
-
-BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://pivot-powerhouse.preview.emergentagent.com").rstrip("/")
-=======
 import pytest
 from fastapi.testclient import TestClient
 from backend.server import app
->>>>>>> a4386bf (Initial commit)
 
 
 @pytest.fixture
 def client():
-<<<<<<< HEAD
-    s = requests.Session()
-    s.headers.update({"Content-Type": "application/json"})
-    return s
-=======
     return TestClient(app)
->>>>>>> a4386bf (Initial commit)
 
 
 # --- root
 def test_root(client):
-<<<<<<< HEAD
-    r = client.get(f"{BASE_URL}/api/")
-=======
     r = client.get("/api/")
->>>>>>> a4386bf (Initial commit)
     assert r.status_code == 200
     d = r.json()
     assert d["app"] == "ExcelIntel"
@@ -39,11 +21,7 @@ def test_root(client):
 
 # --- samples
 def test_samples(client):
-<<<<<<< HEAD
-    r = client.get(f"{BASE_URL}/api/samples")
-=======
     r = client.get("/api/samples")
->>>>>>> a4386bf (Initial commit)
     assert r.status_code == 200
     d = r.json()
     assert d["count"] >= 5
@@ -55,11 +33,7 @@ def test_samples(client):
 
 # --- summary
 def test_summary(client):
-<<<<<<< HEAD
-    r = client.get(f"{BASE_URL}/api/summary")
-=======
     r = client.get("/api/summary")
->>>>>>> a4386bf (Initial commit)
     assert r.status_code == 200
     d = r.json()
     kpis = d["kpis"]
@@ -74,11 +48,7 @@ def test_summary(client):
 
 # --- duplicates
 def test_duplicates(client):
-<<<<<<< HEAD
-    r = client.get(f"{BASE_URL}/api/duplicates", params={"file": "customers_region_a.xlsx"})
-=======
     r = client.get("/api/duplicates", params={"file": "customers_region_a.xlsx"})
->>>>>>> a4386bf (Initial commit)
     assert r.status_code == 200
     d = r.json()
     assert "total_groups" in d
@@ -87,11 +57,7 @@ def test_duplicates(client):
 
 
 def test_duplicates_threshold(client):
-<<<<<<< HEAD
-    r = client.get(f"{BASE_URL}/api/duplicates",
-=======
     r = client.get("/api/duplicates",
->>>>>>> a4386bf (Initial commit)
                    params={"file": "customers_region_a.xlsx", "threshold": 75})
     assert r.status_code == 200
     assert r.json()["threshold"] == 75.0
@@ -99,18 +65,11 @@ def test_duplicates_threshold(client):
 
 # --- relationships
 def test_relationships(client):
-<<<<<<< HEAD
-    r = client.get(f"{BASE_URL}/api/relationships")
-=======
     r = client.get("/api/relationships")
->>>>>>> a4386bf (Initial commit)
     assert r.status_code == 200
     d = r.json()
     assert "relationships" in d
     assert "datasets" in d
-<<<<<<< HEAD
-    # Should discover at least 1 relationship between customer datasets
-=======
 >>>>>>> a4386bf (Initial commit)
     assert len(d["relationships"]) >= 1
 
@@ -121,27 +80,18 @@ def test_screenshot(client):
     r = client.get(f"{BASE_URL}/api/screenshots/screenshot_dashboard.png")
 =======
     r = client.get("/api/screenshots/screenshot_dashboard.png")
->>>>>>> a4386bf (Initial commit)
     assert r.status_code == 200
     assert r.headers.get("content-type", "").startswith("image/")
 
 
 def test_screenshot_404(client):
-<<<<<<< HEAD
-    r = client.get(f"{BASE_URL}/api/screenshots/does_not_exist.png")
-=======
     r = client.get("/api/screenshots/does_not_exist.png")
->>>>>>> a4386bf (Initial commit)
     assert r.status_code == 404
 
 
 # --- dataset preview
 def test_dataset(client):
-<<<<<<< HEAD
-    r = client.get(f"{BASE_URL}/api/dataset", params={"file": "customers_region_a.xlsx"})
-=======
     r = client.get("/api/dataset", params={"file": "customers_region_a.xlsx"})
->>>>>>> a4386bf (Initial commit)
     assert r.status_code == 200
     d = r.json()
     assert d["rows"] > 0
