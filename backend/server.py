@@ -185,7 +185,7 @@ def get_discovery_report():
     now = time.time()
     if _cached_discovery_report and (now - _cached_discovery_report[0]) < 10.0:
         return _cached_discovery_report[1]
-    report = _discovery_engine.scan_workspace(SAMPLES_DIR)
+    report = _discovery_engine_fast.scan_workspace_incremental(SAMPLES_DIR)
     rep_dict = report.to_dict()
     _cached_discovery_report = (now, rep_dict)
     return rep_dict
