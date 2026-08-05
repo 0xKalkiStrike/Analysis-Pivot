@@ -48,29 +48,23 @@ def inspect_sheet_efficiently(file_path: Path, sheet_name: str, excel_engine: Ex
         try:
             from openpyxl import load_workbook
             from openpyxl.utils import range_boundaries
-            wb = load_workbook(filename=file_path, read_only=True, keep_links=False)
+            # Open without read_only=True so max_row/max_column are populated instantly
+            wb = load_workbook(filename=file_path, data_only=True, keep_links=False)
             try:
                 ws = wb[sheet_name]
-                
-                # Use ws.dimensions for instant retrieval without cell parsing
-                dims = ws.dimensions
-                if dims and ":" in dims:
-                    try:
-                        _, _, cols_cnt, rows_cnt = range_boundaries(dims)
-                    except Exception:
-                        rows_cnt = ws.max_row
-                        cols_cnt = ws.max_column
-                else:
-                    rows_cnt = ws.max_row
-                    cols_cnt = ws.max_column
+                rows_cnt = ws.max_row
+                cols_cnt = ws.max_column
                 
                 if rows_cnt is None or cols_cnt is None:
-                    rows_cnt = 0
-                    cols_cnt = 0
-                    for row in ws.iter_rows(values_only=True):
-                        rows_cnt += 1
-                        if len(row) > cols_cnt:
-                            cols_cnt = len(row)
+                    dims = ws.dimensions
+                    if dims and ":" in dims:
+                        try:
+                            _, _, cols_cnt, rows_cnt = range_boundaries(dims)
+                        except Exception:
+                            pass
+                
+                rows_cnt = rows_cnt or 0
+                cols_cnt = cols_cnt or 0
                 
                 cols_names = []
                 for row in ws.iter_rows(max_row=1, max_col=cols_cnt or 100, values_only=True):
