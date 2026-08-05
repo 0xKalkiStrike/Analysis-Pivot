@@ -117,7 +117,7 @@ def _all_datasets() -> dict[str, Dataset]:
             continue
         if f.name in ("Duplicate_Report.xlsx", "Master_Data.xlsx"):
             continue
-        if "Bookeo Data Backup" in f.parts:
+        if any("bookeo" in part.lower() or part.startswith("_extracted_") for part in f.parts) or f.stat().st_size > 10 * 1024 * 1024:
             continue
         try:
             mtime = f.stat().st_mtime
