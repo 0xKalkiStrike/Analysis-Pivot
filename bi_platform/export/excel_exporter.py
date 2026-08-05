@@ -422,7 +422,6 @@ class ExcelExporter:
         log.info(f"Master_Data.xlsx successfully generated: {path}")
         return str(path)
 
->>>>>>> a4386bf (Initial commit)
     def export_duplicates(self, groups: list[DuplicateGroup], path: str | Path) -> str:
         from ..engine.duplicate_engine import DuplicateEngine
         df = DuplicateEngine.to_dataframe(groups)

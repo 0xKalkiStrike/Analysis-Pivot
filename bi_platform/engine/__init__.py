@@ -10,9 +10,9 @@ from .pivot_engine import PivotEngine, AGGS as PIVOT_AGGS
 
 from .discovery_engine import DiscoveryEngine, DiscoveryReport, FileDiscoveryInfo
 from .column_detector import ColumnDetector, DEFAULT_COLUMN_ALIASES
-from .cross_file_analyzer import CrossFileAnalyzer, CrossFileAnalysisResult
+from .cross_file_analyzer import CrossFileAnalyzer, CrossFileAnalysisResult, JobController
 from .master_mdm_engine import (
-    JobController, MasterConsolidationEngine, MDMAnalysisResult,
+    MasterConsolidationEngine, MDMAnalysisResult,
     MasterRecord, DuplicateReference, ConflictItem, PREDEFINED_MATCHING_RULES
 )
 

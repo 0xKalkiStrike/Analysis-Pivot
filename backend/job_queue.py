@@ -9,7 +9,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Optional
 
-from ..core.logger import get_logger
+from bi_platform.core.logger import get_logger
 
 log = get_logger(__name__)
 
