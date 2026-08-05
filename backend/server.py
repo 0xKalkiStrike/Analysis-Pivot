@@ -42,11 +42,27 @@ try:
 except (ImportError, ValueError):
     from job_queue import JobQueue, ProgressTracker
 
+import traceback
+
 APP_ROOT = ROOT
 SAMPLES_DIR = APP_ROOT / "samples"
 DOCS_DIR = APP_ROOT / "docs"
 
+# Ensure directories exist
+SAMPLES_DIR.mkdir(parents=True, exist_ok=True)
+DOCS_DIR.mkdir(parents=True, exist_ok=True)
+
 app = FastAPI(title="ExcelIntel Preview API", version=bi_version)
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    tb = traceback.format_exc()
+    log.error(f"Unhandled exception: {exc}\n{tb}")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": str(exc), "traceback": tb.splitlines()}
+    )
+
 api = APIRouter(prefix="/api")
 
 # ---------------------------------------------------------------------------- state
