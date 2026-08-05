@@ -36,4 +36,6 @@ xlrd>=2.0.0
 pyxlsb>=1.0.0
 rapidfuzz>=3.5.0
 python-Levenshtein>=0.25.0
+reportlab>=4.0.0
+rich>=13.7.0
 
