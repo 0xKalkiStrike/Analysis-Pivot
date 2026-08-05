@@ -117,8 +117,12 @@ def inspect_sheet_efficiently(file_path: Path, sheet_name: str, excel_engine: Ex
         except Exception:
             pass
             
-    ds = excel_engine.load_sheet(file_path, sheet_name=sheet_name)
-    return ds.rows, ds.cols, ds.columns
+    try:
+        ds = excel_engine.load_sheet(file_path, sheet_name=sheet_name)
+        return ds.rows, ds.cols, ds.columns
+    except Exception as e:
+        log.error(f"Fallback loading failed for {file_path}: {e}")
+        return 0, 0, []
 
 
 @dataclass
