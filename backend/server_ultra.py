@@ -324,13 +324,24 @@ async def find_duplicates(
 # MIDDLEWARE
 # ============================================================================
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=os.environ.get("CORS_ORIGINS", "*").split(","),
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+cors_origins_ultra = os.environ.get("CORS_ORIGINS", "*").split(",")
+if len(cors_origins_ultra) == 1 and cors_origins_ultra[0] == "*":
+    app.add_middleware(
+        CORSMiddleware,
+        allow_credentials=True,
+        allow_origin_regex="https?://.*",
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+else:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_credentials=True,
+        allow_origins=cors_origins_ultra,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
 
 
 # ============================================================================
