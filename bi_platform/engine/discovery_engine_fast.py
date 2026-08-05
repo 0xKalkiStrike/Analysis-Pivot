@@ -11,6 +11,7 @@ from typing import Any
 from ..core.constants import SUPPORTED_ALL
 from ..core.logger import get_logger
 from .excel_engine import ExcelEngine
+from .discovery_engine import inspect_sheet_efficiently
 
 log = get_logger(__name__)
 
@@ -84,7 +85,16 @@ class FastDiscoveryEngine:
         # Discover files
         file_paths = []
         for ext in SUPPORTED_ALL:
-            file_paths.extend(workspace_path.rglob(f"*{ext}"))
+            for path in workspace_path.rglob(f"*{ext}"):
+                if path.is_file():
+                    # Skip files larger than 50MB or generated duplicate reports to prevent memory/timeout issues
+                    if path.stat().st_size > 50 * 1024 * 1024:
+                        log.warning(f"Skipping large file: {path.name}")
+                        continue
+                    if "duplicate_report" in path.name.lower():
+                        log.info(f"Skipping duplicate report: {path.name}")
+                        continue
+                    file_paths.append(path)
 
         if not file_paths:
             return report
@@ -152,13 +162,13 @@ class FastDiscoveryEngine:
             sheet_info = []
             for sheet in sheets:
                 try:
-                    ds = self.excel_engine.load_sheet(path, sheet_name=sheet)
-                    total_rows += ds.rows
-                    total_cols = max(total_cols, ds.cols)
+                    rows_cnt, cols_cnt, cols_names = inspect_sheet_efficiently(path, sheet, self.excel_engine)
+                    total_rows += rows_cnt
+                    total_cols = max(total_cols, cols_cnt)
                     sheet_info.append({
                         "name": sheet,
-                        "rows": ds.rows,
-                        "cols": ds.cols,
+                        "rows": rows_cnt,
+                        "cols": cols_cnt,
                     })
                 except Exception:
                     pass

@@ -21,6 +21,106 @@ from .excel_engine import ExcelEngine
 log = get_logger(__name__)
 
 
+def inspect_sheet_efficiently(file_path: Path, sheet_name: str, excel_engine: ExcelEngine) -> tuple[int, int, list[str]]:
+    """Get rows count, cols count and cols names of a sheet extremely efficiently without loading all cell data into memory."""
+    suffix = file_path.suffix.lower()
+    
+    # Handle CSV / TSV
+    if suffix in [".csv", ".tsv"]:
+        import polars as pl
+        sep = "\t" if suffix == ".tsv" else ","
+        try:
+            df_cols = pl.read_csv(file_path, separator=sep, n_rows=1, ignore_errors=True)
+            cols_names = df_cols.columns
+            cols_cnt = len(cols_names)
+            
+            rows_cnt = 0
+            with open(file_path, "rb") as f:
+                for _ in f:
+                    rows_cnt += 1
+            rows_cnt = max(0, rows_cnt - 1)
+            return rows_cnt, cols_cnt, cols_names
+        except Exception:
+            pass
+
+    # Handle Excel Spreadsheets
+    elif suffix in [".xlsx", ".xlsm"]:
+        try:
+            from openpyxl import load_workbook
+            from openpyxl.utils import range_boundaries
+            wb = load_workbook(filename=file_path, read_only=True, keep_links=False)
+            try:
+                ws = wb[sheet_name]
+                
+                # Use ws.dimensions for instant retrieval without cell parsing
+                dims = ws.dimensions
+                if dims and ":" in dims:
+                    try:
+                        _, _, cols_cnt, rows_cnt = range_boundaries(dims)
+                    except Exception:
+                        rows_cnt = ws.max_row
+                        cols_cnt = ws.max_column
+                else:
+                    rows_cnt = ws.max_row
+                    cols_cnt = ws.max_column
+                
+                if rows_cnt is None or cols_cnt is None:
+                    rows_cnt = 0
+                    cols_cnt = 0
+                    for row in ws.iter_rows(values_only=True):
+                        rows_cnt += 1
+                        if len(row) > cols_cnt:
+                            cols_cnt = len(row)
+                
+                cols_names = []
+                for row in ws.iter_rows(max_row=1, max_col=cols_cnt or 100, values_only=True):
+                    cols_names = [str(x) if x is not None else f"Column_{i}" for i, x in enumerate(row)]
+                
+                final_rows = max(0, rows_cnt - 1) if rows_cnt > 0 else 0
+                return final_rows, cols_cnt, cols_names
+            finally:
+                wb.close()
+        except Exception:
+            pass
+            
+    elif suffix == ".xls":
+        try:
+            import xlrd
+            wb = xlrd.open_workbook(file_path, on_demand=True)
+            try:
+                ws = wb.sheet_by_name(sheet_name)
+                rows_cnt = ws.nrows
+                cols_cnt = ws.ncols
+                cols_names = [str(x) for x in ws.row_values(0)]
+                final_rows = max(0, rows_cnt - 1) if rows_cnt > 0 else 0
+                return final_rows, cols_cnt, cols_names
+            finally:
+                wb.release_resources()
+        except Exception:
+            pass
+            
+    elif suffix == ".xlsb":
+        try:
+            from pyxlsb import open_workbook
+            with open_workbook(file_path) as wb:
+                with wb.get_sheet(sheet_name) as ws:
+                    rows_cnt = 0
+                    cols_cnt = 0
+                    cols_names = []
+                    for idx, row in enumerate(ws.iter_rows()):
+                        rows_cnt += 1
+                        if idx == 0:
+                            cols_names = [str(cell.v) if cell.v is not None else f"Column_{i}" for i, cell in enumerate(row)]
+                            cols_cnt = len(cols_names)
+                    final_rows = max(0, rows_cnt - 1) if rows_cnt > 0 else 0
+                    return final_rows, cols_cnt, cols_names
+        except Exception:
+            pass
+            
+    ds = excel_engine.load_sheet(file_path, sheet_name=sheet_name)
+    return ds.rows, ds.cols, ds.columns
+
+
 @dataclass
 class FileDiscoveryInfo:
     file_path: str
@@ -133,6 +233,13 @@ class DiscoveryEngine:
         all_candidate_files: list[Path] = []
         for p in sorted(root_path.rglob("*")):
             if p.is_file() and p.suffix.lower() in SUPPORTED_ALL:
+                # Skip files larger than 50MB or generated duplicate reports to prevent memory/timeout issues
+                if p.stat().st_size > 50 * 1024 * 1024:
+                    log.warning(f"Skipping large file during discovery: {p.name}")
+                    continue
+                if "duplicate_report" in p.name.lower():
+                    log.info(f"Skipping duplicate report during discovery: {p.name}")
+                    continue
                 all_candidate_files.append(p)
 
         report = DiscoveryReport()
@@ -170,10 +277,7 @@ class DiscoveryEngine:
 
                 for sheet_name in sheets_list:
                     try:
-                        ds = self.excel_engine.load_sheet(p, sheet_name=sheet_name)
-                        rows_cnt = ds.rows
-                        cols_cnt = ds.cols
-                        cols_names = ds.columns
+                        rows_cnt, cols_cnt, cols_names = inspect_sheet_efficiently(p, sheet_name, self.excel_engine)
                         is_empty = (rows_cnt == 0 or cols_cnt == 0)
 
                         if is_empty:
