@@ -116,34 +116,28 @@ class FastDiscoveryEngine:
                 report.total_columns += cached_result.get("total_columns", 0)
                 report.files.append(cached_result)
 
-        # Parallel analysis of new/changed files
+        # Sequential analysis of new/changed files (avoids ThreadPoolExecutor hangs in resource-constrained environments)
         if files_to_analyze:
-            with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-                futures = {
-                    executor.submit(self._analyze_file, p): str(p)
-                    for p in files_to_analyze
-                }
-
-                for future in as_completed(futures):
-                    path_key = futures[future]
-                    try:
-                        result = future.result()
-                        if result:
-                            self._results_cache[path_key] = result
-                            self._file_cache[path_key] = FileMetadata(
-                                file_path=path_key,
-                                file_hash=self._compute_file_hash(Path(path_key)),
-                                file_size=Path(path_key).stat().st_size,
-                                modified_time=Path(path_key).stat().st_mtime,
-                                extension=Path(path_key).suffix.lower(),
-                            )
-                            report.total_worksheets += result.get("worksheets_count", 0)
-                            report.total_records += result.get("total_rows", 0)
-                            report.total_columns += result.get("total_columns", 0)
-                            report.files.append(result)
-                    except Exception as e:
-                        log.error(f"File analysis error for {path_key}: {e}")
-                        report.corrupted_files_count += 1
+            for p in files_to_analyze:
+                path_key = str(p)
+                try:
+                    result = self._analyze_file(p)
+                    if result:
+                        self._results_cache[path_key] = result
+                        self._file_cache[path_key] = FileMetadata(
+                            file_path=path_key,
+                            file_hash=self._compute_file_hash(p),
+                            file_size=p.stat().st_size,
+                            modified_time=p.stat().st_mtime,
+                            extension=p.suffix.lower(),
+                        )
+                        report.total_worksheets += result.get("worksheets_count", 0)
+                        report.total_records += result.get("total_rows", 0)
+                        report.total_columns += result.get("total_columns", 0)
+                        report.files.append(result)
+                except Exception as e:
+                    log.error(f"File analysis error for {path_key}: {e}")
+                    report.corrupted_files_count += 1
 
         report.total_files = len(report.files)
 
