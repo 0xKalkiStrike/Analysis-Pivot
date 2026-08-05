@@ -191,6 +191,17 @@ def get_discovery_report():
     return rep_dict
 
 
+@api.get("/debug-discovery")
+def debug_discovery():
+    import traceback
+    try:
+        report = _discovery_engine_fast.scan_workspace_incremental(SAMPLES_DIR)
+        return {"status": "ok", "report": report.to_dict()}
+    except Exception as e:
+        tb = traceback.format_exc()
+        return {"status": "error", "error": str(e), "traceback": tb.splitlines()}
+
+
 @api.get("/dataset")
 def get_dataset(file: str, sheet: str | None = None, limit: int = 100):
     ds = _load(file, sheet)
