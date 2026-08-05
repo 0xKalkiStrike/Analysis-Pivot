@@ -91,6 +91,7 @@ export default function ExcelIntelDashboard() {
     fetchDiscoveryReport();
     fetchAliases();
     startMDMAnalysis("rule_1");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Poll Job Status when job is running or paused
