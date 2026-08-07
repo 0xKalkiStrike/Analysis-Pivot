@@ -324,23 +324,27 @@ async def find_duplicates(
 # MIDDLEWARE
 # ============================================================================
 
-cors_origins_ultra = os.environ.get("CORS_ORIGINS", "*").split(",")
-if len(cors_origins_ultra) == 1 and cors_origins_ultra[0] == "*":
-    app.add_middleware(
-        CORSMiddleware,
-        allow_credentials=True,
-        allow_origin_regex="https?://.*",
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-else:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_credentials=True,
-        allow_origins=cors_origins_ultra,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+raw_origins_ultra = os.environ.get("CORS_ORIGINS", "")
+parsed_origins_ultra = [o.strip() for o in raw_origins_ultra.split(",") if o.strip() and o.strip() != "*"]
+
+default_origins_ultra = [
+    "https://analysis-pivot.vercel.app",
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://localhost:8000",
+]
+for orig in default_origins_ultra:
+    if orig not in parsed_origins_ultra:
+        parsed_origins_ultra.append(orig)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=parsed_origins_ultra,
+    allow_origin_regex=r"https?://.*",
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 

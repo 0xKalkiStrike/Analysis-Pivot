@@ -58,9 +58,16 @@ app = FastAPI(title="ExcelIntel Preview API", version=bi_version)
 async def global_exception_handler(request: Request, exc: Exception):
     tb = traceback.format_exc()
     log.error(f"Unhandled exception: {exc}\n{tb}")
+    origin = request.headers.get("origin", "*")
     return JSONResponse(
         status_code=500,
-        content={"detail": str(exc), "traceback": tb.splitlines()}
+        content={"detail": str(exc), "traceback": tb.splitlines()},
+        headers={
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Methods": "*",
+            "Access-Control-Allow-Headers": "*",
+        }
     )
 
 api = APIRouter(prefix="/api")
@@ -1001,21 +1008,25 @@ def get_job_result(job_id: str):
 # ---------------------------------------------------------------------------- app
 app.include_router(api)
 
-cors_origins = os.environ.get("CORS_ORIGINS", "*").split(",")
-if len(cors_origins) == 1 and cors_origins[0] == "*":
-    app.add_middleware(
-        CORSMiddleware,
-        allow_credentials=True,
-        allow_origin_regex="https?://.*",
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-else:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_credentials=True,
-        allow_origins=cors_origins,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+raw_origins = os.environ.get("CORS_ORIGINS", "")
+parsed_origins = [o.strip() for o in raw_origins.split(",") if o.strip() and o.strip() != "*"]
+
+default_origins = [
+    "https://analysis-pivot.vercel.app",
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://localhost:8000",
+]
+for orig in default_origins:
+    if orig not in parsed_origins:
+        parsed_origins.append(orig)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=parsed_origins,
+    allow_origin_regex=r"https?://.*",
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
