@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: analysis-pivot-backend
+    env: node
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CORS_ORIGINS
+        value: https://analysis-pivot.vercel.app

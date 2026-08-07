@@ -4,7 +4,7 @@
   "description": "Enterprise Excel Analytics & BI Web Application",
   "main": "server.js",
   "scripts": {
-    "start": "concurrently \"node server.js\" \"npm --prefix frontend start\"",
+    "start": "node server.js",
     "dev": "concurrently \"node server.js\" \"npm --prefix frontend start\"",
     "server": "node server.js",
     "client": "npm --prefix frontend start"
