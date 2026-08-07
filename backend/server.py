@@ -43,6 +43,9 @@ except (ImportError, ValueError):
     from job_queue import JobQueue, ProgressTracker
 
 import traceback
+from bi_platform.core.logger import get_logger
+
+log = get_logger(__name__)
 
 APP_ROOT = ROOT
 SAMPLES_DIR = APP_ROOT / "samples"
