@@ -34,15 +34,16 @@ class UltraFastAnalyticsEngine:
         for d in datasets:
             try:
                 cols += d.cols
+                df = d.df
 
                 # DuckDB: Ultra-fast unique count via SQL
-                result = duckdb.sql(f"SELECT COUNT(DISTINCT *) as cnt FROM d.df").fetchall()
+                result = duckdb.sql("SELECT COUNT(DISTINCT *) as cnt FROM df").fetchall()
                 unique_total += result[0][0] if result else d.rows
 
                 # DuckDB: Count nulls
-                null_counts = duckdb.sql(f"""
+                null_counts = duckdb.sql("""
                     SELECT SUM(CASE WHEN col IS NULL THEN 1 ELSE 0 END) as null_cnt
-                    FROM (SELECT * FROM d.df) t(col)
+                    FROM (SELECT * FROM df) t(col)
                 """).fetchall()
                 missing += null_counts[0][0] if null_counts else 0
 
