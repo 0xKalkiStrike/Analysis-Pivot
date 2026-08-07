@@ -261,11 +261,15 @@ export default function ExcelIntelDashboard() {
         ) || lastResponse.saved_files[0];
 
         setSelectedFile(validSpreadsheet);
-        if (lastResponse.dataset) setDataset(lastResponse.dataset);
-        if (lastResponse.active_sheet) setSelectedSheet(lastResponse.active_sheet);
+        const targetSheet = lastResponse.active_sheet || null;
+        if (targetSheet) setSelectedSheet(targetSheet);
+
+        axios.get(`${API}/dataset`, { params: { file: validSpreadsheet, sheet: targetSheet || undefined, limit: 100 } })
+          .then((r) => setDataset(r.data))
+          .catch(() => { if (lastResponse.dataset) setDataset(lastResponse.dataset); });
       }
 
-      setTab("master_mdm");
+      setTab("data");
       axios.get(`${API}/summary`).then((r) => setSummary(r.data)).catch(() => {});
       startMDMAnalysis("rule_1");
     } catch (err) {

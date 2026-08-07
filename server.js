@@ -782,15 +782,16 @@ app.post('/api/mdm/analyze', (req, res) => {
         if (data && data.allRows.length > 0) {
           data.allRows.forEach((r, rIdx) => {
             totalRecordsCount++;
-            const name = r['Customer Name'] || r['Full Name'] || r['Name'] || r['name'] || '';
-            const address = r['Office Address'] || r['Customer Address'] || r['Address'] || r['address'] || '';
+            const firstColKey = Object.keys(r)[0] || '';
+            const name = r['Customer Name'] || r['Full Name'] || r['Name'] || r['name'] || r['Title'] || r['Product'] || r['Item'] || r[firstColKey] || '';
+            const address = r['Office Address'] || r['Customer Address'] || r['Address'] || r['address'] || r['Location'] || '';
             const city = r['City'] || r['Town'] || r['city'] || '';
             const state = r['State'] || r['Province'] || r['state'] || '';
             const contact = r['Contact Number'] || r['Phone Number'] || r['Mobile'] || r['phone'] || '';
             const email = r['Email'] || r['Mail ID'] || r['Email Address'] || r['email'] || '';
-            const company = r['Company'] || r['company'] || '';
-            const gst = r['GST Number'] || r['GST'] || r['gst'] || '';
-            const customerId = r['Customer ID'] || r['customer_id'] || '';
+            const company = r['Company'] || r['company'] || r['Vendor'] || r['Supplier'] || '';
+            const gst = r['GST Number'] || r['GST'] || r['gst'] || r['ID'] || r['Code'] || '';
+            const customerId = r['Customer ID'] || r['customer_id'] || r['ID'] || r['Code'] || r['SKU'] || '';
 
             let matchKey = '';
             if (rule_id === 'rule_2' && email) matchKey = `email:${String(email).trim().toLowerCase()}`;
