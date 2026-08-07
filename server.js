@@ -53,22 +53,33 @@ function listSheets(filePath) {
   }
 }
 
-// Recursive file scanner for samples directory and subfolders
+// Recursive file scanner for samples directory and deeply nested subfolders
 function getFilesRecursive(dir = SAMPLES_DIR, baseDir = SAMPLES_DIR) {
   let results = [];
   if (!fs.existsSync(dir)) return results;
   const list = fs.readdirSync(dir);
 
   list.forEach(file => {
+    // Filter out OS hidden/system files and temporary Excel lock files
+    if (file.startsWith('~$') || file.startsWith('._') || file === '__MACOSX' || file === '.git' || file === 'node_modules') {
+      return;
+    }
+
     const fullPath = path.join(dir, file);
-    const stat = fs.statSync(fullPath);
+    let stat;
+    try {
+      stat = fs.statSync(fullPath);
+    } catch (e) {
+      return;
+    }
+
     if (stat && stat.isDirectory()) {
       results = results.concat(getFilesRecursive(fullPath, baseDir));
-    } else {
+    } else if (stat && stat.isFile()) {
       const ext = path.extname(file).toLowerCase();
       if (['.xlsx', '.csv', '.xls', '.xlsm', '.xlsb', '.tsv'].includes(ext)) {
         const relativePath = path.relative(baseDir, fullPath).replace(/\\/g, '/');
-        const folderName = path.dirname(relativePath) === '.' ? 'Root' : path.dirname(relativePath);
+        const folderName = path.dirname(relativePath) === '.' ? 'Root' : path.dirname(relativePath).replace(/\\/g, '/');
         results.push({
           name: relativePath,
           basename: path.basename(file),
@@ -83,14 +94,21 @@ function getFilesRecursive(dir = SAMPLES_DIR, baseDir = SAMPLES_DIR) {
   return results;
 }
 
-// Resolve full file path from either relative path or basename
+// Resolve full file path from relative path, URI encoded string, or basename
 function resolveFilePath(fileName) {
   if (!fileName) return null;
-  const directPath = path.join(SAMPLES_DIR, fileName);
+  const cleanName = decodeURIComponent(String(fileName)).replace(/\\/g, '/').replace(/^\//, '');
+  const directPath = path.join(SAMPLES_DIR, cleanName);
   if (fs.existsSync(directPath) && fs.statSync(directPath).isFile()) return directPath;
 
   const allFiles = getFilesRecursive(SAMPLES_DIR);
-  const match = allFiles.find(f => f.name === fileName || f.basename === fileName || f.name.endsWith('/' + fileName));
+  const targetNorm = cleanName.toLowerCase();
+
+  const match = allFiles.find(f => {
+    const fNorm = f.name.toLowerCase();
+    const fBase = f.basename.toLowerCase();
+    return fNorm === targetNorm || fBase === targetNorm || fNorm.endsWith('/' + targetNorm) || targetNorm.endsWith('/' + fNorm);
+  });
   return match ? match.fullPath : null;
 }
 
